@@ -223,46 +223,27 @@ MAIL_SSL_TLS=False
 
 ---
 
-## Database Tables — Two Options
+## Database Tables
 
-### Option A: Auto-create on startup (recommended for local dev)
+Tables are created automatically when you run the SQL schema file.
 
-Tables are created automatically when you start the backend with `uvicorn`.
-No extra steps needed. SQLAlchemy reads all models and creates any missing tables.
+### Option A — Supabase SQL Editor (recommended)
 
-### Option B: Alembic migrations (recommended for production)
+1. Open your Supabase project → **SQL Editor** → **New query**
+2. Copy the contents of `backend/database/schema.sql`
+3. Paste and click **Run**
 
-An initial migration file is already included at `backend/alembic/versions/0001_initial_schema.py`.
-Just run:
+### Option B — psql CLI (local PostgreSQL)
 
 ```bash
-cd backend
+# Create the database
+psql -U postgres -c "CREATE DATABASE syncwork;"
 
-# Make sure venv is active and .env is configured
-alembic upgrade head
+# Run the schema
+psql -U postgres -d syncwork -f backend/database/schema.sql
 ```
 
-This creates all 6 tables: `users`, `boards`, `board_members`, `columns`, `cards`, `activity_logs`.
-
-**For future schema changes:**
-```bash
-# After editing a model file, generate a new migration
-alembic revision --autogenerate -m "describe your change"
-
-# Apply it
-alembic upgrade head
-```
-
-**To roll back the last migration:**
-```bash
-alembic downgrade -1
-```
-
-**To check current migration status:**
-```bash
-alembic current
-alembic history
-```
+All 6 tables will be created: `users`, `boards`, `board_members`, `columns`, `cards`, `activity_logs`.
 
 ---
 
@@ -282,7 +263,8 @@ project-root/
 │   │   ├── services/          # Business logic
 │   │   ├── realtime/          # WebSocket (Socket.io)
 │   │   └── scheduler/         # Background jobs
-│   ├── alembic/               # Database migrations
+│   ├── database/
+│   │   └── schema.sql         # Plain SQL — run once to create all tables
 │   ├── requirements.txt       # Python packages
 │   └── .env.example           # Environment template
 │

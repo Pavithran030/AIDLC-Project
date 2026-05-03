@@ -130,9 +130,6 @@ pnpm-debug.log*
 # MISC
 # ─────────────────────────────────────────────
 
-# Alembic — keep migrations, ignore only generated temp files
-# (nothing extra needed here)
-
 # Package manager locks — keep package-lock.json, ignore yarn/pnpm locks
 yarn.lock
 pnpm-lock.yaml

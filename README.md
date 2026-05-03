@@ -50,7 +50,6 @@ Built as a production-ready application with a clean separation between frontend
 | [FastAPI](https://fastapi.tiangolo.com) | Async REST API framework |
 | [SQLAlchemy 2.x](https://docs.sqlalchemy.org) | Async ORM |
 | [PostgreSQL](https://www.postgresql.org) | Primary database |
-| [Alembic](https://alembic.sqlalchemy.org) | Database migrations |
 | [python-socketio](https://python-socketio.readthedocs.io) | WebSocket server (Socket.io) |
 | [bcrypt](https://pypi.org/project/bcrypt/) | Password hashing |
 | [python-jose](https://python-jose.readthedocs.io) | JWT encoding/decoding |
@@ -98,11 +97,8 @@ syncwork/
 │   │   ├── services/            # Business logic layer
 │   │   ├── realtime/            # Socket.io server + event handlers + presence
 │   │   └── scheduler/           # APScheduler deadline checker job
-│   ├── alembic/                 # Database migrations
-│   │   └── versions/
 │   ├── requirements.txt
-│   ├── .env.example
-│   └── alembic.ini
+│   └── .env.example
 │
 ├── frontend/
 │   ├── src/
@@ -182,8 +178,7 @@ cp .env.example .env
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-> Tables are created automatically on first startup via SQLAlchemy.  
-> For production, use Alembic: `alembic upgrade head`
+> Tables are created automatically on first startup via SQLAlchemy.
 
 ### 4. Frontend setup
 
