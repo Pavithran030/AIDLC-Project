@@ -364,5 +364,5 @@ This project is licensed under the [MIT License](LICENSE).
 ---
 
 <div align="center">
-  Built with FastAPI · React · PostgreSQL · Socket.io
+  Built with Vibe Coding💻 and Own Idea💡
 </div>
