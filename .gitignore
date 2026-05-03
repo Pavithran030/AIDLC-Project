@@ -1,0 +1,144 @@
+# ─────────────────────────────────────────────
+# SECRETS — never commit these
+# ─────────────────────────────────────────────
+.env
+*.env
+.env.local
+.env.production
+.env.staging
+
+# ─────────────────────────────────────────────
+# PYTHON / BACKEND
+# ─────────────────────────────────────────────
+
+# Virtual environment
+backend/venv/
+venv/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Distribution / packaging
+*.egg-info/
+dist/
+build/
+*.egg
+*.whl
+MANIFEST
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.cover
+
+# mypy / type checkers
+.mypy_cache/
+.dmypy.json
+.pytype/
+
+# ─────────────────────────────────────────────
+# NODE / FRONTEND
+# ─────────────────────────────────────────────
+
+# Dependencies
+frontend/node_modules/
+node_modules/
+
+# Build output
+frontend/dist/
+frontend/build/
+dist/
+build/
+
+# Vite cache
+frontend/.vite/
+.vite/
+
+# TypeScript build info
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# ─────────────────────────────────────────────
+# DATABASE
+# ─────────────────────────────────────────────
+
+# Local SQLite files (if ever used for testing)
+*.db
+*.sqlite
+*.sqlite3
+
+# ─────────────────────────────────────────────
+# OS FILES
+# ─────────────────────────────────────────────
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# ─────────────────────────────────────────────
+# EDITORS & IDEs
+# ─────────────────────────────────────────────
+
+# VS Code (keep settings.json if you want shared config, otherwise ignore all)
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# JetBrains (PyCharm, WebStorm, etc.)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Vim / Emacs
+*.swp
+*.swo
+*~
+\#*\#
+.\#*
+
+# ─────────────────────────────────────────────
+# LOGS
+# ─────────────────────────────────────────────
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ─────────────────────────────────────────────
+# MISC
+# ─────────────────────────────────────────────
+
+# Alembic — keep migrations, ignore only generated temp files
+# (nothing extra needed here)
+
+# Package manager locks — keep package-lock.json, ignore yarn/pnpm locks
+yarn.lock
+pnpm-lock.yaml
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.orig
