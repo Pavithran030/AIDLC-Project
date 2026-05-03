@@ -1,6 +1,6 @@
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -23,7 +23,6 @@ scheduler = AsyncIOScheduler()
 async def lifespan(app: FastAPI):
     logger.info("Syncwork API starting up...")
     logger.info(f"FRONTEND_URL: {settings.FRONTEND_URL}")
-    logger.info(f"DB host: {settings.DATABASE_URL.split('@')[-1].split('/')[0] if '@' in settings.DATABASE_URL else 'configured'}")
 
     try:
         from app.scheduler.jobs import check_deadlines
@@ -39,13 +38,18 @@ async def lifespan(app: FastAPI):
     yield
 
     scheduler.shutdown(wait=False)
-    logger.info("Syncwork API shut down.")
 
 
 app = FastAPI(title="Syncwork API", lifespan=lifespan)
 
-# CORS — allow localhost for dev + Vercel URL for production
-_allowed_origins = ["http://localhost:5173", "http://localhost:3000"]
+# ── CORS ──────────────────────────────────────────────────────────────────────
+# Collect all allowed origins: localhost for dev + the deployed Vercel URL
+_allowed_origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://syncwork-mu.vercel.app",  # production frontend
+]
+# Also add whatever FRONTEND_URL is set to on Render (handles custom domains)
 if settings.FRONTEND_URL not in _allowed_origins:
     _allowed_origins.append(settings.FRONTEND_URL)
 
@@ -55,8 +59,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=600,
 )
 
 app.include_router(auth.router)
@@ -69,4 +75,21 @@ async def health():
     return {"status": "ok"}
 
 
+# Explicit OPTIONS handler — catches preflight requests before Socket.io mount
+@app.options("/{rest_of_path:path}")
+async def preflight_handler(request: Request, rest_of_path: str):
+    """Return 200 for all CORS preflight OPTIONS requests."""
+    return Response(
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": request.headers.get("origin", "*"),
+            "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Max-Age": "600",
+        },
+    )
+
+
+# Mount Socket.io — must come AFTER all routes so OPTIONS handler takes priority
 app.mount("/socket.io", socket_app)

@@ -1,8 +1,11 @@
 import socketio
 from app.config import settings
 
-# Allow localhost for dev + the configured FRONTEND_URL for production
-_allowed_origins = ["http://localhost:5173", "http://localhost:3000"]
+_allowed_origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://syncwork-mu.vercel.app",  # production frontend
+]
 if settings.FRONTEND_URL not in _allowed_origins:
     _allowed_origins.append(settings.FRONTEND_URL)
 
