@@ -2,6 +2,7 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from app.config import settings
@@ -43,13 +44,11 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Syncwork API", lifespan=lifespan)
 
 # ── CORS ──────────────────────────────────────────────────────────────────────
-# Collect all allowed origins: localhost for dev + the deployed Vercel URL
 _allowed_origins = [
     "http://localhost:5173",
     "http://localhost:3000",
-    "https://syncwork-mu.vercel.app",  # production frontend
+    "https://syncwork-mu.vercel.app",
 ]
-# Also add whatever FRONTEND_URL is set to on Render (handles custom domains)
 if settings.FRONTEND_URL not in _allowed_origins:
     _allowed_origins.append(settings.FRONTEND_URL)
 
@@ -65,6 +64,23 @@ app.add_middleware(
     max_age=600,
 )
 
+
+# ── Global error handler — ensures CORS headers are present even on 500 ───────
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    origin = request.headers.get("origin", "")
+    logger.error(f"Unhandled error on {request.method} {request.url.path}: {exc}", exc_info=True)
+    headers = {}
+    if origin in _allowed_origins:
+        headers["Access-Control-Allow-Origin"] = origin
+        headers["Access-Control-Allow-Credentials"] = "true"
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+        headers=headers,
+    )
+
+
 app.include_router(auth.router)
 app.include_router(boards.router)
 app.include_router(cards.router)
@@ -75,10 +91,9 @@ async def health():
     return {"status": "ok"}
 
 
-# Explicit OPTIONS handler — catches preflight requests before Socket.io mount
+# Explicit OPTIONS handler — catches preflight before Socket.io mount
 @app.options("/{rest_of_path:path}")
 async def preflight_handler(request: Request, rest_of_path: str):
-    """Return 200 for all CORS preflight OPTIONS requests."""
     return Response(
         status_code=200,
         headers={
@@ -91,5 +106,5 @@ async def preflight_handler(request: Request, rest_of_path: str):
     )
 
 
-# Mount Socket.io — must come AFTER all routes so OPTIONS handler takes priority
+# Mount Socket.io — after all routes so OPTIONS handler takes priority
 app.mount("/socket.io", socket_app)
