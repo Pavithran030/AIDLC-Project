@@ -3,7 +3,7 @@ import asyncio
 import logging
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import text, event
+from sqlalchemy import text, NullPool
 
 from app.config import settings
 
@@ -11,12 +11,7 @@ logger = logging.getLogger("syncwork")
 
 
 def _build_db_url(raw: str) -> str:
-    """
-    Normalize the DATABASE_URL:
-    - Strip query params (?ssl=require, ?sslmode=require) — asyncpg uses connect_args
-    - Ensure the asyncpg driver prefix is present
-    - Handle postgres:// shorthand (used by some providers)
-    """
+    """Normalize DATABASE_URL to postgresql+asyncpg:// format, strip query params."""
     url = raw.strip().split("?")[0]
     if url.startswith("postgres://"):
         url = url.replace("postgres://", "postgresql+asyncpg://", 1)
@@ -30,36 +25,34 @@ _db_host = _db_url.split("@")[-1] if "@" in _db_url else "unknown"
 logger.info(f"DB target : {_db_host}")
 
 # ── SSL ───────────────────────────────────────────────────────────────────────
-# Required for Supabase (both direct and pooler).
-# CERT_NONE = encrypted connection, no certificate chain verification.
-# This is necessary because some cloud hosts (including Render) don't have
-# Supabase's CA in their trust store.
 _ssl_ctx = ssl.create_default_context()
 _ssl_ctx.check_hostname = False
 _ssl_ctx.verify_mode = ssl.CERT_NONE
 
 # ── Engine ────────────────────────────────────────────────────────────────────
-# statement_cache_size=0 and prepared_statement_cache_size=0 are ALWAYS set.
+# CRITICAL for PgBouncer / Supabase pooler (transaction mode):
 #
-# Why: Supabase connection pooler (PgBouncer in transaction mode) does not
-# persist prepared statements across connections. asyncpg caches them by
-# default, causing DuplicatePreparedStatementError on the pooler.
-# Setting both to 0 disables the cache entirely — safe for both direct
-# connections and pooler connections, with negligible performance impact.
+# The DuplicatePreparedStatementError happens because SQLAlchemy's asyncpg
+# dialect runs its own internal queries (like "select current_schema()") using
+# prepared statements BEFORE your connect_args are applied to the connection.
+#
+# The correct fix is to use NullPool + pass statement_cache_size=0 directly
+# to the asyncpg dialect via connect_args. NullPool creates a fresh connection
+# per request — no connection reuse across requests, which is exactly what
+# PgBouncer transaction mode expects.
 engine = create_async_engine(
     _db_url,
+    # NullPool: no connection pooling on SQLAlchemy side.
+    # PgBouncer IS the pool — SQLAlchemy should not pool on top of it.
+    # This eliminates all prepared statement conflicts.
+    poolclass=NullPool,
     echo=False,
-    pool_pre_ping=True,      # verify connection before use — catches stale connections
-    pool_recycle=180,        # recycle connections every 3 min (Render free tier sleeps)
-    pool_size=3,             # small pool — Supabase free tier has a 60-connection limit
-    max_overflow=5,
-    pool_timeout=30,
     connect_args={
         "ssl": _ssl_ctx,
-        "timeout": 30,                       # connection timeout (seconds)
-        "command_timeout": 60,               # query timeout (seconds)
-        "statement_cache_size": 0,           # disable asyncpg prepared statement cache
-        "prepared_statement_cache_size": 0,  # disable PgBouncer-incompatible cache
+        "timeout": 30,
+        "command_timeout": 60,
+        "statement_cache_size": 0,           # disable asyncpg prepared stmt cache
+        "prepared_statement_cache_size": 0,  # disable asyncpg prepared stmt cache
     },
 )
 
@@ -74,7 +67,6 @@ class Base(DeclarativeBase):
     pass
 
 
-# ── Session dependency ────────────────────────────────────────────────────────
 async def get_db():
     async with AsyncSessionLocal() as session:
         try:
@@ -85,13 +77,8 @@ async def get_db():
             raise
 
 
-# ── Health check ──────────────────────────────────────────────────────────────
 async def check_db_connection() -> dict:
-    """
-    Test the database connection with a simple SELECT 1.
-    Returns {"database": "ok"} or {"database": "error", "detail": "..."}.
-    Used by the /health endpoint.
-    """
+    """Test DB connection. Used by /health endpoint."""
     try:
         async with engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
@@ -101,15 +88,8 @@ async def check_db_connection() -> dict:
         return {"database": "error", "detail": f"{type(e).__name__}: {str(e)}"}
 
 
-# ── Retry helper ──────────────────────────────────────────────────────────────
 async def with_db_retry(coro_fn, retries: int = 3, delay: float = 1.0):
-    """
-    Execute an async coroutine with exponential backoff retry.
-    Use for operations that may fail due to transient connection issues.
-
-    Example:
-        result = await with_db_retry(lambda: some_db_operation(db))
-    """
+    """Retry an async DB operation with exponential backoff."""
     last_exc = None
     for attempt in range(retries):
         try:
@@ -117,6 +97,6 @@ async def with_db_retry(coro_fn, retries: int = 3, delay: float = 1.0):
         except Exception as e:
             last_exc = e
             wait = delay * (2 ** attempt)
-            logger.warning(f"DB retry {attempt + 1}/{retries} after {wait}s: {e}")
+            logger.warning(f"DB retry {attempt + 1}/{retries} in {wait}s: {e}")
             await asyncio.sleep(wait)
     raise last_exc
