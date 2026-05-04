@@ -1,4 +1,5 @@
 import logging
+import httpx
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,12 +21,28 @@ logger = logging.getLogger("syncwork")
 scheduler = AsyncIOScheduler()
 
 
+async def keep_alive():
+    """
+    Ping our own /health endpoint every 10 minutes.
+    Prevents Render free tier from spinning down the service.
+    Only runs when RENDER_EXTERNAL_URL is set (i.e. on Render, not locally).
+    """
+    render_url = settings.RENDER_EXTERNAL_URL
+    if not render_url:
+        return
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(f"{render_url}/health")
+            logger.info(f"Keep-alive ping: {resp.status_code}")
+    except Exception as e:
+        logger.warning(f"Keep-alive ping failed: {e}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("=== Syncwork API starting ===")
     logger.info(f"FRONTEND_URL : {settings.FRONTEND_URL}")
 
-    # Test DB connection at startup so we know immediately if it fails
     from app.database import check_db_connection
     db_status = await check_db_connection()
     logger.info(f"DB status    : {db_status}")
@@ -36,8 +53,13 @@ async def lifespan(app: FastAPI):
             check_deadlines, "interval", minutes=15,
             id="deadline_checker", replace_existing=True
         )
+        # Self-ping every 10 minutes to prevent Render cold starts
+        scheduler.add_job(
+            keep_alive, "interval", minutes=10,
+            id="keep_alive", replace_existing=True
+        )
         scheduler.start()
-        logger.info("Scheduler    : started")
+        logger.info("Scheduler    : started (deadline checker + keep-alive)")
     except Exception as e:
         logger.error(f"Scheduler failed: {e}")
 
@@ -71,7 +93,6 @@ app.add_middleware(
 )
 
 
-# ── Global error handler — CORS headers on 500 errors ─────────────────────────
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     origin = request.headers.get("origin", "")
@@ -97,18 +118,12 @@ app.include_router(cards.router)
 
 @app.get("/health")
 async def health():
-    """Full health check — tests DB connection. Use this to diagnose Render issues."""
     from app.database import check_db_connection
     db = await check_db_connection()
     status = "ok" if db["database"] == "ok" else "degraded"
-    return {
-        "status": status,
-        "database": db,
-        "frontend_url": settings.FRONTEND_URL,
-    }
+    return {"status": status, "database": db}
 
 
-# Explicit OPTIONS handler — catches preflight before Socket.io mount
 @app.options("/{rest_of_path:path}")
 async def preflight_handler(request: Request, rest_of_path: str):
     return Response(
@@ -123,5 +138,4 @@ async def preflight_handler(request: Request, rest_of_path: str):
     )
 
 
-# Mount Socket.io — after all routes so OPTIONS handler takes priority
 app.mount("/socket.io", socket_app)

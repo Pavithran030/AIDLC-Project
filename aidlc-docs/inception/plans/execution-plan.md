@@ -1,92 +1,70 @@
-# Execution Plan
+# Execution Plan — Syncwork (Final)
 
-## Detailed Analysis Summary
-
-### Change Impact Assessment
-- **User-facing changes**: Yes — entire new user-facing application
-- **Structural changes**: Yes — new full-stack system from scratch
-- **Data model changes**: Yes — new PostgreSQL schema with 6 entities
-- **API changes**: Yes — new REST API + WebSocket events
-- **NFR impact**: Yes — real-time, auth, background scheduler, email
-
-### Risk Assessment
-- **Risk Level**: Medium
-- **Rollback Complexity**: Easy (greenfield — nothing to break)
-- **Testing Complexity**: Moderate (real-time + async + drag-and-drop)
+## Status: COMPLETE — Deployed to Production
 
 ---
 
-## Workflow Visualization
+## What Was Built
 
-```
-INCEPTION PHASE
-  [x] Workspace Detection         — COMPLETED
-  [x] Reverse Engineering         — SKIPPED (Greenfield)
-  [x] Requirements Analysis       — COMPLETED
-  [ ] User Stories                — SKIPPED (comprehensive requirements already captured)
-  [x] Workflow Planning           — IN PROGRESS
-  [ ] Application Design          — EXECUTE
-  [ ] Units Generation            — EXECUTE
+A full-stack real-time collaborative task management application named **Syncwork**.
 
-CONSTRUCTION PHASE (per unit)
-  [ ] Functional Design           — EXECUTE
-  [ ] NFR Requirements            — EXECUTE
-  [ ] NFR Design                  — EXECUTE
-  [ ] Infrastructure Design       — EXECUTE
-  [ ] Code Generation             — EXECUTE (ALWAYS)
-  [ ] Build and Test              — EXECUTE (ALWAYS)
-
-OPERATIONS PHASE
-  [ ] Operations                  — PLACEHOLDER
-```
+| Item | Detail |
+|---|---|
+| Frontend | https://syncwork-mu.vercel.app |
+| Backend | https://aidlc-project.onrender.com |
+| Database | Supabase PostgreSQL (pooler, port 6543) |
 
 ---
 
-## Phases to Execute
+## Phases Executed
 
-### 🔵 INCEPTION PHASE
-- [x] Workspace Detection — COMPLETED
-- [x] Reverse Engineering — SKIPPED (Greenfield project, no existing code)
-- [x] Requirements Analysis — COMPLETED
-- [ ] User Stories — **SKIP**
-  - **Rationale**: Requirements are comprehensive and detailed. The user provided a complete system description covering all user interactions, workflows, and acceptance criteria. User stories would be redundant overhead.
-- [x] Workflow Planning — IN PROGRESS
-- [ ] Application Design — **EXECUTE**
-  - **Rationale**: New full-stack system with 6+ entities, multiple services (auth, boards, cards, real-time, scheduler, email). Component boundaries and service layer design are needed before code generation.
-- [ ] Units Generation — **EXECUTE**
-  - **Rationale**: System has two clearly separable units: Backend (FastAPI) and Frontend (React). Each unit has distinct tech stacks, deployment targets, and development concerns.
+### 🔵 INCEPTION PHASE — Complete
+- [x] Workspace Detection — Greenfield confirmed
+- [x] Requirements Analysis — Full requirements gathered via Q&A
+- [x] Workflow Planning — Execution plan created
+- [x] Application Design — Components, services, dependencies designed
+- [x] Units Generation — 2 units: Backend + Frontend
 
-### 🟢 CONSTRUCTION PHASE
-- [ ] Functional Design — **EXECUTE** (per unit)
-  - **Rationale**: Complex business logic (card positioning, board membership, deadline calculation, WebSocket event routing) needs detailed design before code generation.
-- [ ] NFR Requirements — **EXECUTE** (per unit)
-  - **Rationale**: Performance (async), security (JWT/cookies), real-time (Socket.io), email (async SMTP), and deployment (Railway/Vercel) NFRs need explicit design.
-- [ ] NFR Design — **EXECUTE** (per unit)
-  - **Rationale**: NFR patterns (async patterns, cookie auth, CORS, scheduler design) need to be incorporated into the design before code generation.
-- [ ] Infrastructure Design — **EXECUTE** (per unit)
-  - **Rationale**: Deployment to Railway (backend) and Vercel (frontend) with Docker Compose for local dev needs explicit infrastructure mapping.
-- [ ] Code Generation — **EXECUTE** (ALWAYS, per unit)
-- [ ] Build and Test — **EXECUTE** (ALWAYS)
+### 🟢 CONSTRUCTION PHASE — Complete
+- [x] Unit 1 Backend — Code generated
+- [x] Unit 2 Frontend — Code generated
+- [x] Build and Test — Build verified, deployed
 
-### 🟡 OPERATIONS PHASE
-- [ ] Operations — PLACEHOLDER
+### Post-Build Fixes Applied
+- [x] bcrypt/passlib incompatibility → replaced passlib with direct bcrypt
+- [x] CORS preflight (OPTIONS 400) → added explicit OPTIONS handler + NullPool
+- [x] PgBouncer prepared statement conflict → NullPool + statement_cache_size=0
+- [x] SSL certificate verification on Windows → CERT_NONE SSL context
+- [x] TypeScript build error (import.meta.env) → added vite-env.d.ts
+- [x] Auth flow improved → register no longer auto-logs in, forgot/reset password added
+- [x] Password show/hide toggle → PasswordInput component
+- [x] App renamed → Syncwork (🗂️)
+- [x] Docker removed → plain Python venv setup
+- [x] Alembic removed → plain SQL schema file
+- [x] Supabase pooler URL → port 6543, transaction mode
 
 ---
 
-## Units of Work
+## Key Decisions Made During Build
 
-| Unit | Description | Tech Stack |
+| Decision | Choice | Reason |
 |---|---|---|
-| Unit 1: Backend | FastAPI REST API + Socket.io + PostgreSQL + Scheduler + Email | Python, FastAPI, SQLAlchemy, PostgreSQL, APScheduler |
-| Unit 2: Frontend | React SPA with Zustand, Axios, Socket.io client, dnd-kit | TypeScript, React, Vite, Zustand, Tailwind CSS |
+| DB migrations | Plain SQL (schema.sql) | Simpler than Alembic for this scale |
+| Connection pooling | NullPool | PgBouncer is the pool — no double pooling |
+| Password hashing | Direct bcrypt | passlib 1.7.4 incompatible with bcrypt 5.x |
+| Token storage | localStorage | Simpler than httpOnly cookies for small team |
+| Auth flow | Register → Login (separate) | Better UX, standard practice |
+| Deployment | Render + Vercel + Supabase | All free tier, no Docker needed |
+| UI theme | Handwritten Notebook | User selected from options presented |
+| App name | Syncwork | User selected — reflects real-time sync function |
 
 ---
 
-## Estimated Timeline
-- **Total Stages**: 9 (excluding skipped)
-- **Complexity**: High (full-stack, real-time, multiple integrations)
+## Success Criteria — All Met
 
-## Success Criteria
-- **Primary Goal**: Fully functional real-time collaborative Kanban board
-- **Key Deliverables**: Complete backend + frontend code, Docker Compose, deployment configs, build instructions
-- **Quality Gates**: All API endpoints functional, WebSocket events working, drag-and-drop working, cyberpunk UI rendered
+- [x] All API endpoints functional
+- [x] WebSocket events working (card CRUD, activity, presence, deadline alerts)
+- [x] Drag-and-drop working
+- [x] Notebook UI rendered
+- [x] Auth flow complete (register, login, forgot/reset password)
+- [x] Deployed and accessible publicly

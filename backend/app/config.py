@@ -27,5 +27,9 @@ class Settings(BaseSettings):
 
     FRONTEND_URL: str = "http://localhost:5173"
 
+    # Set automatically by Render — used for keep-alive self-ping
+    # Leave blank for local dev
+    RENDER_EXTERNAL_URL: str = ""
+
 
 settings = Settings()
