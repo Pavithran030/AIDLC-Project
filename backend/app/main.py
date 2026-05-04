@@ -22,8 +22,13 @@ scheduler = AsyncIOScheduler()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Syncwork API starting up...")
-    logger.info(f"FRONTEND_URL: {settings.FRONTEND_URL}")
+    logger.info("=== Syncwork API starting ===")
+    logger.info(f"FRONTEND_URL : {settings.FRONTEND_URL}")
+
+    # Test DB connection at startup so we know immediately if it fails
+    from app.database import check_db_connection
+    db_status = await check_db_connection()
+    logger.info(f"DB status    : {db_status}")
 
     try:
         from app.scheduler.jobs import check_deadlines
@@ -32,13 +37,14 @@ async def lifespan(app: FastAPI):
             id="deadline_checker", replace_existing=True
         )
         scheduler.start()
-        logger.info("Scheduler started.")
+        logger.info("Scheduler    : started")
     except Exception as e:
-        logger.error(f"Scheduler failed to start: {e}")
+        logger.error(f"Scheduler failed: {e}")
 
     yield
 
     scheduler.shutdown(wait=False)
+    logger.info("=== Syncwork API stopped ===")
 
 
 app = FastAPI(title="Syncwork API", lifespan=lifespan)
@@ -52,7 +58,7 @@ _allowed_origins = [
 if settings.FRONTEND_URL not in _allowed_origins:
     _allowed_origins.append(settings.FRONTEND_URL)
 
-logger.info(f"CORS allowed origins: {_allowed_origins}")
+logger.info(f"CORS origins : {_allowed_origins}")
 
 app.add_middleware(
     CORSMiddleware,
@@ -65,18 +71,21 @@ app.add_middleware(
 )
 
 
-# ── Global error handler — ensures CORS headers are present even on 500 ───────
+# ── Global error handler — CORS headers on 500 errors ─────────────────────────
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     origin = request.headers.get("origin", "")
-    logger.error(f"Unhandled error on {request.method} {request.url.path}: {exc}", exc_info=True)
+    logger.error(
+        f"500 on {request.method} {request.url.path}: {type(exc).__name__}: {exc}",
+        exc_info=True,
+    )
     headers = {}
     if origin in _allowed_origins:
         headers["Access-Control-Allow-Origin"] = origin
         headers["Access-Control-Allow-Credentials"] = "true"
     return JSONResponse(
         status_code=500,
-        content={"detail": "Internal server error"},
+        content={"detail": f"{type(exc).__name__}: {str(exc)}"},
         headers=headers,
     )
 
@@ -88,7 +97,15 @@ app.include_router(cards.router)
 
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    """Full health check — tests DB connection. Use this to diagnose Render issues."""
+    from app.database import check_db_connection
+    db = await check_db_connection()
+    status = "ok" if db["database"] == "ok" else "degraded"
+    return {
+        "status": status,
+        "database": db,
+        "frontend_url": settings.FRONTEND_URL,
+    }
 
 
 # Explicit OPTIONS handler — catches preflight before Socket.io mount
