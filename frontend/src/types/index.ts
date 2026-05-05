@@ -1,9 +1,8 @@
-export interface User {
-  id: string
-  email: string
-  display_name: string
-  created_at: string
-}
+// Re-export from stores for convenience
+export type { AuthUser as User } from '../stores/authStore'
+export type { CardRow as Card, ColumnRow as Column, BoardDetail } from '../stores/boardStore'
+export type { ActivityEntry } from '../stores/activityStore'
+export type { PresenceUser } from '../stores/presenceStore'
 
 export interface Board {
   id: string
@@ -12,43 +11,4 @@ export interface Board {
   owner_id: string
   deadline_alert_hours: number
   created_at: string
-}
-
-export interface Column {
-  id: string
-  board_id: string
-  name: string
-  position: number
-  created_at: string
-  cards: Card[]
-}
-
-export interface Card {
-  id: string
-  column_id: string
-  title: string
-  description: string | null
-  assigned_user_id: string | null
-  assigned_user: User | null
-  deadline: string | null
-  created_at: string
-  updated_at: string
-}
-
-export interface BoardDetail extends Board {
-  columns: Column[]
-  members: User[]
-}
-
-export interface ActivityEntry {
-  id: string
-  message: string
-  user_id: string
-  display_name: string
-  created_at: string
-}
-
-export interface PresenceUser {
-  user_id: string
-  display_name: string
 }

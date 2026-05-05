@@ -1,61 +1,100 @@
 import { create } from 'zustand'
-import type { User } from '../types'
-import { authApi } from '../api/auth.api'
+import { supabase } from '../lib/supabase'
+
+export interface AuthUser {
+  id: string
+  email: string
+  display_name: string
+}
 
 interface AuthState {
-  user: User | null
-  token: string | null
+  user: AuthUser | null
   isLoading: boolean
+  initialized: boolean
   login: (email: string, password: string) => Promise<void>
-  register: (email: string, password: string, displayName: string) => Promise<string>
-  logout: () => void
-  loadFromStorage: () => Promise<void>
+  register: (email: string, password: string, displayName: string) => Promise<void>
+  logout: () => Promise<void>
+  initialize: () => Promise<void>
+}
+
+async function fetchProfile(userId: string, email: string): Promise<AuthUser> {
+  const { data } = await supabase
+    .from('profiles')
+    .select('display_name')
+    .eq('id', userId)
+    .maybeSingle()   // returns null instead of error when no row found
+
+  return {
+    id: userId,
+    email,
+    display_name: data?.display_name || email.split('@')[0],
+  }
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  token: localStorage.getItem('token'),
   isLoading: false,
+  initialized: false,
+
+  initialize: async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+
+    if (session?.user) {
+      const user = await fetchProfile(session.user.id, session.user.email!)
+      set({ user, initialized: true })
+    } else {
+      set({ user: null, initialized: true })
+    }
+
+    // Keep in sync with Supabase auth state changes
+    supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        const user = await fetchProfile(session.user.id, session.user.email!)
+        set({ user })
+      } else {
+        set({ user: null })
+      }
+    })
+  },
 
   login: async (email, password) => {
     set({ isLoading: true })
     try {
-      const { data } = await authApi.login(email, password)
-      localStorage.setItem('token', data.access_token)
-      set({ user: data.user, token: data.access_token, isLoading: false })
-    } catch (err) {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) throw new Error(error.message)
+    } finally {
       set({ isLoading: false })
-      throw err
     }
   },
 
-  // Returns the success message from the server — does NOT log the user in
   register: async (email, password, displayName) => {
     set({ isLoading: true })
     try {
-      const { data } = await authApi.register(email, password, displayName)
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          // Skip email confirmation — user can log in immediately
+          data: { display_name: displayName },
+        },
+      })
+      if (error) throw new Error(error.message)
+
+      if (data.user) {
+        // Upsert profile so display_name is stored
+        await supabase.from('profiles').upsert({
+          id: data.user.id,
+          email,
+          display_name: displayName,
+        })
+      }
+    } finally {
       set({ isLoading: false })
-      return data.message
-    } catch (err) {
-      set({ isLoading: false })
-      throw err
     }
   },
 
-  logout: () => {
-    localStorage.removeItem('token')
-    set({ user: null, token: null })
-  },
-
-  loadFromStorage: async () => {
-    const token = localStorage.getItem('token')
-    if (!token) return
-    try {
-      const { data } = await authApi.me()
-      set({ user: data, token })
-    } catch {
-      localStorage.removeItem('token')
-      set({ user: null, token: null })
-    }
+  logout: async () => {
+    await supabase.auth.signOut()
+    set({ user: null })
   },
 }))

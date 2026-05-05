@@ -1,5 +1,9 @@
 import { create } from 'zustand'
-import type { PresenceUser } from '../types'
+
+export interface PresenceUser {
+  user_id: string
+  display_name: string
+}
 
 interface PresenceState {
   users: PresenceUser[]

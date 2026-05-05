@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { cardsApi } from '../../api/cards.api'
+import { useAuthStore } from '../../stores/authStore'
 import toast from 'react-hot-toast'
 
 interface Props {
@@ -10,13 +11,14 @@ export function AddCardForm({ columnId }: Props) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState('')
   const [loading, setLoading] = useState(false)
+  const { user } = useAuthStore()
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!title.trim()) return
+    if (!title.trim() || !user) return
     setLoading(true)
     try {
-      await cardsApi.create(columnId, { title: title.trim() })
+      await cardsApi.create(columnId, { title: title.trim() }, user.id, user.display_name)
       setTitle('')
       setOpen(false)
     } catch {
@@ -28,11 +30,7 @@ export function AddCardForm({ columnId }: Props) {
 
   if (!open) {
     return (
-      <button
-        className="w-full text-left text-sm text-ink-muted hover:text-ink py-1 px-2 rounded hover:bg-paper-dark transition-colors"
-        onClick={() => setOpen(true)}
-        data-testid="add-card-button"
-      >
+      <button className="w-full text-left text-sm text-ink-muted hover:text-ink py-1 px-2 rounded hover:bg-paper-dark transition-colors" onClick={() => setOpen(true)} data-testid="add-card-button">
         + Add card
       </button>
     )
@@ -40,21 +38,10 @@ export function AddCardForm({ columnId }: Props) {
 
   return (
     <form onSubmit={submit} className="mt-2">
-      <input
-        className="notebook-input text-sm mb-2"
-        placeholder="Card title..."
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        autoFocus
-        data-testid="add-card-input"
-      />
+      <input className="notebook-input text-sm mb-2" placeholder="Card title..." value={title} onChange={(e) => setTitle(e.target.value)} autoFocus data-testid="add-card-input" />
       <div className="flex gap-2">
-        <button type="submit" className="btn-ink text-sm py-1 px-3" disabled={loading} data-testid="add-card-submit">
-          Add
-        </button>
-        <button type="button" className="btn-ghost text-sm py-1 px-3" onClick={() => setOpen(false)}>
-          Cancel
-        </button>
+        <button type="submit" className="btn-ink text-sm py-1 px-3" disabled={loading} data-testid="add-card-submit">Add</button>
+        <button type="button" className="btn-ghost text-sm py-1 px-3" onClick={() => setOpen(false)}>Cancel</button>
       </div>
     </form>
   )

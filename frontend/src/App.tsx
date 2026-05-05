@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { useAuthStore } from './stores/authStore'
@@ -10,23 +10,34 @@ import { BoardListPage } from './pages/BoardListPage'
 import { BoardPage } from './pages/BoardPage'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
-  const { token } = useAuthStore()
-  if (!token) return <Navigate to="/login" replace />
+  const { user, initialized } = useAuthStore()
+  if (!initialized) return null
+  if (!user) return <Navigate to="/login" replace />
   return <>{children}</>
 }
 
 function GuestOnly({ children }: { children: React.ReactNode }) {
-  const { token } = useAuthStore()
-  if (token) return <Navigate to="/boards" replace />
+  const { user, initialized } = useAuthStore()
+  if (!initialized) return null
+  if (user) return <Navigate to="/boards" replace />
   return <>{children}</>
 }
 
 export default function App() {
-  const { loadFromStorage } = useAuthStore()
+  const { initialize } = useAuthStore()
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    loadFromStorage()
+    initialize().finally(() => setReady(true))
   }, [])
+
+  if (!ready) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-paper">
+        <p className="font-serif text-ink-muted text-lg">Loading...</p>
+      </div>
+    )
+  }
 
   return (
     <BrowserRouter>
@@ -43,18 +54,13 @@ export default function App() {
         }}
       />
       <Routes>
-        {/* Guest-only routes — redirect to /boards if already logged in */}
-        <Route path="/login"          element={<GuestOnly><LoginPage /></GuestOnly>} />
-        <Route path="/register"       element={<GuestOnly><RegisterPage /></GuestOnly>} />
+        <Route path="/login"           element={<GuestOnly><LoginPage /></GuestOnly>} />
+        <Route path="/register"        element={<GuestOnly><RegisterPage /></GuestOnly>} />
         <Route path="/forgot-password" element={<GuestOnly><ForgotPasswordPage /></GuestOnly>} />
         <Route path="/reset-password"  element={<ResetPasswordPage />} />
-
-        {/* Protected routes */}
         <Route path="/boards"          element={<RequireAuth><BoardListPage /></RequireAuth>} />
         <Route path="/boards/:boardId" element={<RequireAuth><BoardPage /></RequireAuth>} />
-
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/boards" replace />} />
+        <Route path="*"                element={<Navigate to="/boards" replace />} />
       </Routes>
     </BrowserRouter>
   )

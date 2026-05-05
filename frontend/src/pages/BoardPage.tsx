@@ -5,12 +5,11 @@ import { useBoardStore } from '../stores/boardStore'
 import { useActivityStore } from '../stores/activityStore'
 import { usePresenceStore } from '../stores/presenceStore'
 import { useAuthStore } from '../stores/authStore'
-import { connectSocket, disconnectSocket } from '../services/socket.service'
+import { connectRealtime, disconnectRealtime } from '../services/realtime.service'
 import { Navbar } from '../components/layout/Navbar'
 import { KanbanBoard } from '../components/board/KanbanBoard'
 import { ActivityFeedPanel } from '../components/activity/ActivityFeedPanel'
 import { PresenceBar } from '../components/layout/PresenceBar'
-import type { ActivityEntry } from '../types'
 import toast from 'react-hot-toast'
 
 export function BoardPage() {
@@ -25,15 +24,14 @@ export function BoardPage() {
 
   useEffect(() => {
     if (!boardId || !user) return
-
     const load = async () => {
       try {
-        const [boardRes, activityRes] = await Promise.all([
-          boardsApi.get(boardId),
+        const [board, activity] = await Promise.all([
+          boardsApi.get(boardId, user.id),
           boardsApi.getActivity(boardId),
         ])
-        setBoard(boardRes.data)
-        setMessages(activityRes.data as ActivityEntry[])
+        setBoard(board)
+        setMessages(activity)
       } catch {
         toast.error('Board not found or access denied')
         navigate('/boards')
@@ -41,14 +39,11 @@ export function BoardPage() {
       } finally {
         setLoading(false)
       }
-
-      connectSocket(boardId, user.id, user.display_name)
+      connectRealtime(boardId, user.id, user.display_name)
     }
-
     load()
-
     return () => {
-      disconnectSocket(boardId)
+      disconnectRealtime()
       clearBoard()
       clearActivity()
       clearPresence()
@@ -69,14 +64,9 @@ export function BoardPage() {
   return (
     <div className="min-h-screen flex flex-col bg-paper">
       <Navbar />
-
-      {/* Board header */}
       <div className="px-3 sm:px-6 py-2 sm:py-3 border-b border-paper-border bg-white flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <button
-            className="text-ink-muted hover:text-ink text-sm shrink-0"
-            onClick={() => navigate('/boards')}
-          >
+          <button className="text-ink-muted hover:text-ink text-sm shrink-0" onClick={() => navigate('/boards')}>
             ← <span className="hidden sm:inline">Boards</span>
           </button>
           <span className="text-paper-border hidden sm:inline">|</span>
@@ -84,31 +74,20 @@ export function BoardPage() {
             {useBoardStore.getState().board?.name}
           </h2>
         </div>
-
         <div className="flex items-center gap-2 shrink-0">
           <PresenceBar />
-          {/* Activity toggle — mobile only */}
-          <button
-            className="sm:hidden btn-ghost text-xs py-1 px-2"
-            onClick={() => setShowActivity((v) => !v)}
-            aria-label="Toggle activity feed"
-          >
+          <button className="sm:hidden btn-ghost text-xs py-1 px-2" onClick={() => setShowActivity((v) => !v)} aria-label="Toggle activity feed">
             {showActivity ? '✕' : '📋'}
           </button>
         </div>
       </div>
-
-      {/* Mobile activity drawer */}
       {showActivity && (
         <div className="sm:hidden border-b border-paper-border max-h-48 overflow-y-auto">
           <ActivityFeedPanel />
         </div>
       )}
-
-      {/* Main content */}
       <div className="flex flex-1 overflow-hidden">
         <KanbanBoard />
-        {/* Activity panel — desktop only */}
         <div className="hidden sm:flex">
           <ActivityFeedPanel />
         </div>

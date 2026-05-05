@@ -20,7 +20,7 @@ export function LoginPage() {
       await login(email, password)
       navigate('/boards')
     } catch (err: any) {
-      toast.error(err?.response?.data?.detail || 'Login failed')
+      toast.error(err?.message || 'Login failed')
     }
   }
 
@@ -32,75 +32,37 @@ export function LoginPage() {
           <p className="text-ink-muted text-sm">Sign in to your workspace</p>
         </div>
 
-        {/* Success banners */}
         {justRegistered && (
-          <div className="mb-4 px-4 py-3 rounded border border-done-DEFAULT bg-done-light text-done-DEFAULT text-sm text-center">
+          <div className="mb-4 px-4 py-3 rounded border border-green-300 bg-green-50 text-green-700 text-sm text-center">
             ✅ Account created! Please sign in below.
           </div>
         )}
         {justReset && (
-          <div className="mb-4 px-4 py-3 rounded border border-done-DEFAULT bg-done-light text-done-DEFAULT text-sm text-center">
+          <div className="mb-4 px-4 py-3 rounded border border-green-300 bg-green-50 text-green-700 text-sm text-center">
             ✅ Password updated! Please sign in with your new password.
           </div>
         )}
 
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white border border-paper-border rounded-lg p-8 shadow-paper space-y-4"
-          data-testid="login-form"
-        >
+        <form onSubmit={handleSubmit} className="bg-white border border-paper-border rounded-lg p-8 shadow-paper space-y-4" data-testid="login-form">
           <div>
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wide mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              className="notebook-input"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-              data-testid="login-email-input"
-            />
+            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wide mb-1">Email</label>
+            <input type="email" className="notebook-input" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" data-testid="login-email-input" />
           </div>
-
           <div>
-            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wide mb-1">
-              Password
-            </label>
-            <PasswordInput
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              required
-              data-testid="login-password-input"
-            />
+            <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wide mb-1">Password</label>
+            <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required data-testid="login-password-input" />
             <div className="text-right mt-1">
-              <Link
-                to="/forgot-password"
-                className="text-xs text-ink-muted hover:text-ink underline"
-                data-testid="forgot-password-link"
-              >
-                Forgot password?
-              </Link>
+              <Link to="/forgot-password" className="text-xs text-ink-muted hover:text-ink underline">Forgot password?</Link>
             </div>
           </div>
-
-          <button
-            type="submit"
-            className="btn-ink w-full mt-2"
-            disabled={isLoading}
-            data-testid="login-submit-button"
-          >
+          <button type="submit" className="btn-ink w-full mt-2" disabled={isLoading} data-testid="login-submit-button">
             {isLoading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
 
         <p className="text-center text-sm text-ink-muted mt-4">
           No account?{' '}
-          <Link to="/register" className="text-ink underline hover:text-ink-light">
-            Register
-          </Link>
+          <Link to="/register" className="text-ink underline hover:text-ink-light">Register</Link>
         </p>
       </div>
     </div>

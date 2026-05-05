@@ -12,11 +12,11 @@ export function ForgotPasswordPage() {
     e.preventDefault()
     setLoading(true)
     try {
-      const { data } = await authApi.forgotPassword(email)
+      await authApi.forgotPassword(email)
       setSent(true)
-      toast.success(data.message)
-    } catch {
-      toast.error('Something went wrong. Please try again.')
+      toast.success('Reset link sent if that email is registered')
+    } catch (err: any) {
+      toast.error(err?.message || 'Something went wrong')
     } finally {
       setLoading(false)
     }
@@ -29,62 +29,27 @@ export function ForgotPasswordPage() {
           <h1 className="font-serif text-4xl text-ink mb-2">🗂️ Syncwork</h1>
           <p className="text-ink-muted text-sm">Reset your password</p>
         </div>
-
         {sent ? (
           <div className="bg-white border border-paper-border rounded-lg p-8 shadow-paper text-center space-y-4">
             <div className="text-4xl">📬</div>
             <p className="font-serif text-lg text-ink">Check your inbox</p>
-            <p className="text-sm text-ink-muted">
-              If that email is registered, a reset link has been sent.
-              The link expires in 30 minutes.
-            </p>
-            <p className="text-xs text-ink-muted italic">
-              No email? Check your spam folder, or check the backend console if email is not configured.
-            </p>
-            <Link to="/login" className="btn-ink inline-block mt-2 text-sm">
-              Back to sign in
-            </Link>
+            <p className="text-sm text-ink-muted">A reset link has been sent. The link expires in 1 hour.</p>
+            <Link to="/login" className="btn-ink inline-block mt-2 text-sm">Back to sign in</Link>
           </div>
         ) : (
-          <form
-            onSubmit={handleSubmit}
-            className="bg-white border border-paper-border rounded-lg p-8 shadow-paper space-y-4"
-            data-testid="forgot-password-form"
-          >
-            <p className="text-sm text-ink-muted">
-              Enter your email address and we'll send you a link to reset your password.
-            </p>
-
+          <form onSubmit={handleSubmit} className="bg-white border border-paper-border rounded-lg p-8 shadow-paper space-y-4" data-testid="forgot-password-form">
+            <p className="text-sm text-ink-muted">Enter your email and we'll send you a reset link.</p>
             <div>
-              <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wide mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                className="notebook-input"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                data-testid="forgot-email-input"
-              />
+              <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wide mb-1">Email</label>
+              <input type="email" className="notebook-input" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" data-testid="forgot-email-input" />
             </div>
-
-            <button
-              type="submit"
-              className="btn-ink w-full"
-              disabled={loading}
-              data-testid="forgot-submit-button"
-            >
+            <button type="submit" className="btn-ink w-full" disabled={loading} data-testid="forgot-submit-button">
               {loading ? 'Sending...' : 'Send reset link'}
             </button>
           </form>
         )}
-
         <p className="text-center text-sm text-ink-muted mt-4">
-          <Link to="/login" className="text-ink underline hover:text-ink-light">
-            ← Back to sign in
-          </Link>
+          <Link to="/login" className="text-ink underline hover:text-ink-light">← Back to sign in</Link>
         </p>
       </div>
     </div>
