@@ -22,7 +22,8 @@ export function ColumnComponent({ column, members }: Props) {
 
   return (
     <div
-      className={`notebook-column ${style.colClass} flex flex-col w-72 shrink-0 transition-colors ${isOver ? 'bg-paper-dark' : ''}`}
+      // w-72 on desktop, 80vw on mobile (so you can see a hint of the next column)
+      className={`notebook-column ${style.colClass} flex flex-col w-[80vw] sm:w-72 shrink-0 transition-colors ${isOver ? 'bg-paper-dark' : ''}`}
       data-testid={`column-${column.id}`}
     >
       {/* Column header */}

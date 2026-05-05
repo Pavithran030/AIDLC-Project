@@ -21,6 +21,7 @@ export function BoardPage() {
   const { setMessages, clear: clearActivity } = useActivityStore()
   const { clear: clearPresence } = usePresenceStore()
   const [loading, setLoading] = useState(true)
+  const [showActivity, setShowActivity] = useState(false)
 
   useEffect(() => {
     if (!boardId || !user) return
@@ -70,26 +71,47 @@ export function BoardPage() {
       <Navbar />
 
       {/* Board header */}
-      <div className="px-6 py-3 border-b border-paper-border bg-white flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="px-3 sm:px-6 py-2 sm:py-3 border-b border-paper-border bg-white flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
-            className="text-ink-muted hover:text-ink text-sm"
+            className="text-ink-muted hover:text-ink text-sm shrink-0"
             onClick={() => navigate('/boards')}
           >
-            ← Boards
+            ← <span className="hidden sm:inline">Boards</span>
           </button>
-          <span className="text-paper-border">|</span>
-          <h2 className="font-serif text-lg text-ink">
+          <span className="text-paper-border hidden sm:inline">|</span>
+          <h2 className="font-serif text-base sm:text-lg text-ink truncate">
             {useBoardStore.getState().board?.name}
           </h2>
         </div>
-        <PresenceBar />
+
+        <div className="flex items-center gap-2 shrink-0">
+          <PresenceBar />
+          {/* Activity toggle — mobile only */}
+          <button
+            className="sm:hidden btn-ghost text-xs py-1 px-2"
+            onClick={() => setShowActivity((v) => !v)}
+            aria-label="Toggle activity feed"
+          >
+            {showActivity ? '✕' : '📋'}
+          </button>
+        </div>
       </div>
+
+      {/* Mobile activity drawer */}
+      {showActivity && (
+        <div className="sm:hidden border-b border-paper-border max-h-48 overflow-y-auto">
+          <ActivityFeedPanel />
+        </div>
+      )}
 
       {/* Main content */}
       <div className="flex flex-1 overflow-hidden">
         <KanbanBoard />
-        <ActivityFeedPanel />
+        {/* Activity panel — desktop only */}
+        <div className="hidden sm:flex">
+          <ActivityFeedPanel />
+        </div>
       </div>
     </div>
   )

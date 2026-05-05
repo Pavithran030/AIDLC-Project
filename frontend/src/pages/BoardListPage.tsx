@@ -55,13 +55,13 @@ export function BoardListPage() {
     <div className="min-h-screen flex flex-col bg-paper">
       <Navbar />
 
-      <main className="flex-1 max-w-4xl mx-auto w-full px-6 py-8">
-        <h1 className="font-serif text-3xl text-ink mb-8">Your Boards</h1>
+      <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8">
+        <h1 className="font-serif text-2xl sm:text-3xl text-ink mb-6 sm:mb-8">Your Boards</h1>
 
-        {/* Create + Join row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-          <form onSubmit={handleCreate} className="bg-white border border-paper-border rounded-lg p-5 shadow-paper">
-            <h2 className="font-serif text-lg text-ink mb-3">New Board</h2>
+        {/* Create + Join — stacked on mobile, side by side on md+ */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-8 sm:mb-10">
+          <form onSubmit={handleCreate} className="bg-white border border-paper-border rounded-lg p-4 sm:p-5 shadow-paper">
+            <h2 className="font-serif text-base sm:text-lg text-ink mb-3">New Board</h2>
             <input
               className="notebook-input mb-3"
               placeholder="Board name..."
@@ -74,8 +74,8 @@ export function BoardListPage() {
             </button>
           </form>
 
-          <form onSubmit={handleJoin} className="bg-white border border-paper-border rounded-lg p-5 shadow-paper">
-            <h2 className="font-serif text-lg text-ink mb-3">Join a Board</h2>
+          <form onSubmit={handleJoin} className="bg-white border border-paper-border rounded-lg p-4 sm:p-5 shadow-paper">
+            <h2 className="font-serif text-base sm:text-lg text-ink mb-3">Join a Board</h2>
             <input
               className="notebook-input mb-3 uppercase tracking-widest"
               placeholder="Enter join code..."
@@ -96,25 +96,23 @@ export function BoardListPage() {
         ) : boards.length === 0 ? (
           <p className="text-ink-muted text-sm italic">No boards yet. Create one above.</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
             {boards.map((board) => (
               <button
                 key={board.id}
-                className="text-left bg-white border border-paper-border rounded-lg p-5 shadow-paper hover:shadow-paper-lift transition-shadow group"
+                className="text-left bg-white border border-paper-border rounded-lg p-4 sm:p-5 shadow-paper hover:shadow-paper-lift transition-shadow group active:scale-[0.98]"
                 onClick={() => navigate(`/boards/${board.id}`)}
                 data-testid={`board-card-${board.id}`}
               >
-                <h3 className="font-serif text-lg text-ink group-hover:text-ink-light transition-colors mb-1">
+                <h3 className="font-serif text-base sm:text-lg text-ink group-hover:text-ink-light transition-colors mb-1 truncate">
                   {board.name}
                 </h3>
                 <p className="text-xs text-ink-muted mb-3">
                   Created {format(new Date(board.created_at), 'MMM d, yyyy')}
                 </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono bg-paper-dark text-ink-muted px-2 py-0.5 rounded tracking-widest">
-                    {board.join_code}
-                  </span>
-                </div>
+                <span className="text-xs font-mono bg-paper-dark text-ink-muted px-2 py-0.5 rounded tracking-widest">
+                  {board.join_code}
+                </span>
               </button>
             ))}
           </div>

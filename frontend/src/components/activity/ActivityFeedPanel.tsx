@@ -5,7 +5,7 @@ export function ActivityFeedPanel() {
   const { messages } = useActivityStore()
 
   return (
-    <aside className="w-64 shrink-0 bg-paper border-l border-paper-border flex flex-col">
+    <aside className="w-full sm:w-64 shrink-0 bg-paper border-l border-paper-border flex flex-col">
       <div className="px-4 py-3 border-b border-paper-border">
         <h3 className="font-serif text-sm font-semibold text-ink-light uppercase tracking-wide">
           Activity

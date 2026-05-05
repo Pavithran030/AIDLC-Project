@@ -38,7 +38,7 @@ Built as a production-ready application with a clean separation between frontend
 | **User Presence** | See who is currently viewing the same board |
 | **Deadline Alerts** | Background scheduler detects approaching deadlines and alerts the board |
 | **Email Notifications** | Optional email on card assignment and deadline reminders |
-| **Notebook UI** | Warm paper theme, Lora serif font, ruled-line cards, ink accents |
+| **Notebook UI** | Warm paper theme, Lora serif font, ruled-line cards, ink accents, fully mobile responsive |
 
 ---
 
@@ -66,7 +66,7 @@ Built as a production-ready application with a clean separation between frontend
 | [Axios](https://axios-http.com) | HTTP client |
 | [socket.io-client](https://socket.io/docs/v4/client-api/) | WebSocket client |
 | [@dnd-kit](https://dndkit.com) | Drag-and-drop |
-| [Tailwind CSS](https://tailwindcss.com) | Utility-first styling |
+| [Tailwind CSS](https://tailwindcss.com) | Utility-first styling + mobile responsive breakpoints |
 | [React Router v6](https://reactrouter.com) | Client-side routing |
 | [react-hot-toast](https://react-hot-toast.com) | Toast notifications |
 | [date-fns](https://date-fns.org) | Date formatting |
