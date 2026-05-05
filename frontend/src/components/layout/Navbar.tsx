@@ -24,7 +24,7 @@ export function Navbar() {
             {user.display_name}
           </span>
           <button
-            className="btn-ghost text-paper/80 border-paper/30 hover:bg-ink-light text-xs sm:text-sm whitespace-nowrap shrink-0"
+            className="text-xs sm:text-sm whitespace-nowrap shrink-0 bg-red-600 hover:bg-red-700 text-white border-none rounded px-3 py-1.5 cursor-pointer transition-colors"
             onClick={handleLogout}
             data-testid="logout-button"
           >
