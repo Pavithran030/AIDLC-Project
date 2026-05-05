@@ -4,14 +4,15 @@
 
 ### Real-Time Collaborative Task Management
 
-**Syncwork** is a full-stack, real-time collaborative task board built for small teams.  
+**Syncwork** is a real-time collaborative task board built for small teams.  
 Organize work, assign tasks, track deadlines, and see every update the moment it happens — no refresh needed.
 
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14+-336791?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org)
-[![Socket.io](https://img.shields.io/badge/Socket.io-4.x-010101?style=flat-square&logo=socket.io&logoColor=white)](https://socket.io)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Supabase](https://img.shields.io/badge/Supabase-2.x-3ECF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com)
+[![Vite](https://img.shields.io/badge/Vite-5.x-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev)
+
+**Live:** [syncwork-mu.vercel.app](https://syncwork-mu.vercel.app)
 
 </div>
 
@@ -19,9 +20,17 @@ Organize work, assign tasks, track deadlines, and see every update the moment it
 
 ## Overview
 
-Syncwork is a Kanban-style task board where teams collaborate in real time. Every card creation, move, or deletion is instantly broadcast to all connected users via WebSockets. The interface follows a **Handwritten Notebook** design theme — warm paper backgrounds, serif typography, and ink-colored column accents — giving it a distinct, focused feel.
+Syncwork is a Kanban-style task board where teams collaborate in real time. Every card creation, move, or deletion is instantly reflected for all connected users via Supabase Realtime. The interface follows a **Handwritten Notebook** design theme — warm paper backgrounds, serif typography, and ink-colored column accents.
 
-Built as a production-ready application with a clean separation between frontend and backend, async database access, background job scheduling, and optional email notifications.
+This is a **frontend-only application** — no custom backend server. Everything runs through Supabase: authentication, database, real-time, and row-level security.
+
+```
+Browser (React on Vercel)
+        ↕  REST queries (data)
+        ↕  Realtime WebSocket (live updates + presence)
+        ↕  Auth (register / login / reset password)
+Supabase (PostgreSQL + Auth + Realtime + RLS)
+```
 
 ---
 
@@ -29,47 +38,33 @@ Built as a production-ready application with a clean separation between frontend
 
 | Feature | Description |
 |---|---|
-| **Authentication** | Register, login, forgot/reset password with JWT |
-| **Boards** | Create boards, invite teammates via unique join code |
+| **Authentication** | Register, login, forgot/reset password via Supabase Auth |
+| **Boards** | Create boards, invite teammates via unique 8-char join code |
 | **Task Cards** | Create, edit, delete, assign, and set deadlines on cards |
-| **Drag & Drop** | Move cards between columns with smooth drag-and-drop |
-| **Real-Time Sync** | All changes broadcast instantly via Socket.io — no refresh needed |
+| **Drag & Drop** | Move cards between columns — mouse and touch supported |
+| **Real-Time Sync** | All changes broadcast instantly via Supabase Realtime |
 | **Live Activity Feed** | Running log of team actions on the right sidebar |
 | **User Presence** | See who is currently viewing the same board |
-| **Deadline Alerts** | Background scheduler detects approaching deadlines and alerts the board |
-| **Email Notifications** | Optional email on card assignment and deadline reminders |
-| **Notebook UI** | Warm paper theme, Lora serif font, ruled-line cards, ink accents, fully mobile responsive |
+| **Deadline Highlight** | Cards approaching their deadline are highlighted amber/red |
+| **Notebook UI** | Warm paper theme, Lora serif font, ruled-line cards, fully mobile responsive |
 
 ---
 
 ## Tech Stack
 
-### Backend
-| Technology | Purpose |
-|---|---|
-| [FastAPI](https://fastapi.tiangolo.com) | Async REST API framework |
-| [SQLAlchemy 2.x](https://docs.sqlalchemy.org) | Async ORM |
-| [PostgreSQL](https://www.postgresql.org) | Primary database |
-| [python-socketio](https://python-socketio.readthedocs.io) | WebSocket server (Socket.io) |
-| [bcrypt](https://pypi.org/project/bcrypt/) | Password hashing |
-| [python-jose](https://python-jose.readthedocs.io) | JWT encoding/decoding |
-| [APScheduler](https://apscheduler.readthedocs.io) | Background deadline checker |
-| [fastapi-mail](https://sabuhish.github.io/fastapi-mail/) | Email notifications |
-| [pydantic-settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/) | Environment configuration |
-
-### Frontend
 | Technology | Purpose |
 |---|---|
 | [React 18](https://react.dev) + [Vite](https://vitejs.dev) | UI framework + build tool |
 | [TypeScript](https://www.typescriptlang.org) | Type safety |
+| [Supabase JS](https://supabase.com/docs/reference/javascript) | Database, Auth, Realtime — all in one client |
 | [Zustand](https://zustand-demo.pmnd.rs) | Global state management |
-| [Axios](https://axios-http.com) | HTTP client |
-| [socket.io-client](https://socket.io/docs/v4/client-api/) | WebSocket client |
-| [@dnd-kit](https://dndkit.com) | Drag-and-drop |
-| [Tailwind CSS](https://tailwindcss.com) | Utility-first styling + mobile responsive breakpoints |
+| [@dnd-kit](https://dndkit.com) | Drag-and-drop (mouse + touch) |
+| [Tailwind CSS](https://tailwindcss.com) | Utility-first styling + responsive breakpoints |
 | [React Router v6](https://reactrouter.com) | Client-side routing |
 | [react-hot-toast](https://react-hot-toast.com) | Toast notifications |
 | [date-fns](https://date-fns.org) | Date formatting |
+| [Vercel](https://vercel.com) | Frontend hosting |
+| [Supabase](https://supabase.com) | Database + Auth + Realtime (free tier) |
 
 ---
 
@@ -77,35 +72,22 @@ Built as a production-ready application with a clean separation between frontend
 
 ```
 syncwork/
-├── backend/
-│   ├── app/
-│   │   ├── main.py              # FastAPI app entry point + Socket.io mount
-│   │   ├── config.py            # Environment settings (pydantic-settings)
-│   │   ├── database.py          # Async SQLAlchemy engine + session
-│   │   ├── security.py          # JWT + bcrypt helpers
-│   │   ├── models/              # SQLAlchemy ORM models
-│   │   │   ├── user.py
-│   │   │   ├── board.py         # Board + BoardMember
-│   │   │   ├── column.py
-│   │   │   ├── card.py
-│   │   │   └── activity.py
-│   │   ├── schemas/             # Pydantic request/response schemas
-│   │   ├── routers/             # API route handlers
-│   │   │   ├── auth.py          # Register, login, forgot/reset password
-│   │   │   ├── boards.py        # Board CRUD + members + activity
-│   │   │   └── cards.py         # Card CRUD + move
-│   │   ├── services/            # Business logic layer
-│   │   ├── realtime/            # Socket.io server + event handlers + presence
-│   │   └── scheduler/           # APScheduler deadline checker job
-│   ├── requirements.txt
-│   └── .env.example
-│
 ├── frontend/
 │   ├── src/
-│   │   ├── api/                 # Axios API functions per resource
-│   │   ├── stores/              # Zustand stores (auth, board, activity, presence)
-│   │   ├── services/            # Socket.io client singleton
-│   │   ├── pages/               # Route-level page components
+│   │   ├── lib/
+│   │   │   └── supabase.ts          # Supabase client (reads VITE_ env vars)
+│   │   ├── api/
+│   │   │   ├── auth.api.ts          # Forgot/reset password
+│   │   │   ├── boards.api.ts        # Board CRUD via Supabase
+│   │   │   └── cards.api.ts         # Card CRUD via Supabase
+│   │   ├── stores/
+│   │   │   ├── authStore.ts         # Supabase Auth session + user profile
+│   │   │   ├── boardStore.ts        # Current board, columns, cards
+│   │   │   ├── activityStore.ts     # Last 20 activity messages
+│   │   │   └── presenceStore.ts     # Active users on the board
+│   │   ├── services/
+│   │   │   └── realtime.service.ts  # Supabase Realtime channel (Postgres Changes + Presence)
+│   │   ├── pages/
 │   │   │   ├── LoginPage.tsx
 │   │   │   ├── RegisterPage.tsx
 │   │   │   ├── ForgotPasswordPage.tsx
@@ -113,19 +95,21 @@ syncwork/
 │   │   │   ├── BoardListPage.tsx
 │   │   │   └── BoardPage.tsx
 │   │   ├── components/
-│   │   │   ├── board/           # KanbanBoard, Column, Card, CardModal, AddCardForm
-│   │   │   ├── layout/          # Navbar, PresenceBar
-│   │   │   ├── activity/        # ActivityFeedPanel
-│   │   │   └── ui/              # Button, Input, Modal, Avatar, PasswordInput
-│   │   └── types/               # Shared TypeScript interfaces
-│   ├── index.html
+│   │   │   ├── board/               # KanbanBoard, Column, Card, CardModal, AddCardForm
+│   │   │   ├── layout/              # Navbar, PresenceBar
+│   │   │   ├── activity/            # ActivityFeedPanel
+│   │   │   └── ui/                  # Modal, Avatar, PasswordInput
+│   │   ├── types/                   # Shared TypeScript interfaces
+│   │   └── index.css                # Notebook theme CSS variables + global styles
+│   ├── supabase-setup.sql           # Run once in Supabase SQL Editor
+│   ├── .env.example
 │   ├── vite.config.ts
 │   ├── tailwind.config.ts
-│   ├── vercel.json
-│   └── .env.example
+│   └── vercel.json                  # SPA routing rewrite
 │
 ├── .gitignore
-├── SETUP.md
+├── IDEA.md                          # Project vision + roadmap
+├── SETUP.md                         # Step-by-step local setup
 └── README.md
 ```
 
@@ -135,9 +119,8 @@ syncwork/
 
 ### Prerequisites
 
-- **Python** 3.11+
 - **Node.js** 18+
-- **PostgreSQL** 14+
+- A free [Supabase](https://supabase.com) account
 
 ### 1. Clone the repository
 
@@ -146,198 +129,112 @@ git clone https://github.com/your-username/syncwork.git
 cd syncwork
 ```
 
-### 2. Create the database
+### 2. Set up Supabase
 
-```bash
-psql -U postgres -c "CREATE DATABASE syncwork;"
-```
+1. Create a new project at [supabase.com](https://supabase.com)
+2. Go to **SQL Editor** → **New query**
+3. Paste the contents of `frontend/supabase-setup.sql` and click **Run without RLS**
+4. Go to **Authentication → Providers → Email** and turn off **"Confirm email"**
 
-### 3. Backend setup
+### 3. Get your Supabase keys
 
-```bash
-cd backend
+Go to **Settings → API** and copy:
+- **Project URL** → `VITE_SUPABASE_URL`
+- **anon / public key** → `VITE_SUPABASE_ANON_KEY`
 
-# Create and activate virtual environment
-python -m venv venv
-
-# Windows
-venv\Scripts\activate
-# macOS / Linux
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Configure environment
-cp .env.example .env
-# Open .env and set DATABASE_URL with your PostgreSQL password
-```
-
-```bash
-# Start the backend
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-> Tables are created automatically on first startup via SQLAlchemy.
-
-### 4. Frontend setup
-
-Open a new terminal:
+### 4. Configure the frontend
 
 ```bash
 cd frontend
-npm install
 cp .env.example .env
+```
+
+Edit `frontend/.env`:
+```env
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key-here
+```
+
+### 5. Install and run
+
+```bash
+npm install
 npm run dev
 ```
 
-### 5. Open the app
-
-| Service | URL |
-|---|---|
-| Frontend | http://localhost:5173 |
-| Backend API | http://localhost:8000 |
-| API Docs (Swagger) | http://localhost:8000/docs |
+Open **http://localhost:5173**
 
 ---
 
 ## Environment Variables
 
-### Backend — `backend/.env`
+### `frontend/.env`
 
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `DATABASE_URL` | ✅ | — | PostgreSQL async URL (`postgresql+asyncpg://...`) |
-| `SECRET_KEY` | ✅ | — | JWT signing secret — use a long random string |
-| `ALGORITHM` | | `HS256` | JWT algorithm |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | | `10080` | Token lifetime (7 days) |
-| `FRONTEND_URL` | | `http://localhost:5173` | Allowed CORS origin |
-| `MAIL_USERNAME` | | `""` | SMTP username — leave blank to disable email |
-| `MAIL_PASSWORD` | | `""` | SMTP password |
-| `MAIL_FROM` | | `""` | Sender email address |
-| `MAIL_SERVER` | | `smtp.gmail.com` | SMTP server |
-| `MAIL_PORT` | | `587` | SMTP port |
-
-> **Tip:** Generate a secure `SECRET_KEY` with:
-> ```bash
-> python -c "import secrets; print(secrets.token_hex(32))"
-> ```
-
-### Frontend — `frontend/.env`
-
-| Variable | Description |
-|---|---|
-| `VITE_API_URL` | Backend base URL (e.g. `http://localhost:8000`) |
-| `VITE_SOCKET_URL` | Socket.io server URL (same as API URL) |
-
----
-
-## API Reference
-
-### Authentication
-
-| Method | Endpoint | Description |
+| Variable | Required | Description |
 |---|---|---|
-| `POST` | `/auth/register` | Create a new account |
-| `POST` | `/auth/login` | Login and receive JWT token |
-| `GET` | `/auth/me` | Get current authenticated user |
-| `POST` | `/auth/forgot-password` | Request a password reset link |
-| `POST` | `/auth/reset-password` | Set a new password using reset token |
-
-### Boards
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/boards` | Create a new board |
-| `GET` | `/boards` | List all boards for current user |
-| `GET` | `/boards/{id}` | Get board with columns, cards, and members |
-| `POST` | `/boards/join` | Join a board using its join code |
-| `PATCH` | `/boards/{id}` | Update board settings (owner only) |
-| `GET` | `/boards/{id}/members` | List board members |
-| `GET` | `/boards/{id}/activity` | Get last 20 activity log entries |
-
-### Cards
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/columns/{id}/cards` | Create a card in a column |
-| `PATCH` | `/cards/{id}` | Update card fields |
-| `DELETE` | `/cards/{id}` | Delete a card |
-| `PATCH` | `/cards/{id}/move` | Move card to a different column |
-
----
-
-## WebSocket Events
-
-All real-time communication uses Socket.io rooms keyed by `board_id`.
-
-### Client → Server
-
-| Event | Payload | Description |
-|---|---|---|
-| `join_board` | `{ board_id, user_id, display_name }` | Join a board room |
-| `leave_board` | `{ board_id }` | Leave a board room |
-
-### Server → Client
-
-| Event | Payload | Description |
-|---|---|---|
-| `card_created` | `{ card }` | A new card was created |
-| `card_updated` | `{ card }` | A card was edited |
-| `card_deleted` | `{ card_id, column_id }` | A card was deleted |
-| `card_moved` | `{ card, old_column_id, new_column_id }` | A card was moved between columns |
-| `activity` | `{ id, message, user_id, display_name, created_at }` | New activity log entry |
-| `presence_update` | `{ users: [{ user_id, display_name }] }` | Active users on the board changed |
-| `deadline_alert` | `{ cards: [{ card_id, card_title, deadline }] }` | Cards approaching their deadline |
+| `VITE_SUPABASE_URL` | ✅ | Your Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | ✅ | Your Supabase anon/public key |
 
 ---
 
 ## Database Schema
 
+All tables live in Supabase PostgreSQL with Row Level Security enabled.
+
 ```
-users
-  id · email · hashed_password · display_name · created_at
-  reset_token · reset_token_expires
+profiles
+  id (UUID → auth.users) · email · display_name · created_at
 
 boards
-  id · name · join_code · owner_id → users · deadline_alert_hours · created_at
+  id · name · join_code (8 chars, unique) · owner_id · deadline_alert_hours · created_at
 
 board_members
-  board_id → boards · user_id → users · joined_at
+  board_id → boards · user_id · joined_at
 
 columns
-  id · board_id → boards · name · position · created_at
+  id · board_id → boards · name · position (1/2/3) · created_at
 
 cards
-  id · column_id → columns · title · description
-  assigned_user_id → users · deadline · created_at · updated_at
+  id · column_id → columns · board_id → boards
+  title · description · assigned_user_id · deadline · created_at · updated_at
 
 activity_logs
-  id · board_id → boards · user_id → users · message · created_at
+  id · board_id → boards · user_id · message · created_at
 ```
+
+### RLS Security Model
+
+- `profiles` — anyone authenticated can read; users can only write their own
+- `board_members` — users can only see their own membership rows (direct column check, no recursion)
+- `boards` — any authenticated user can read (needed for join code lookup); only owner can update
+- `columns`, `cards`, `activity_logs` — only board members can read/write, enforced via `is_board_member()` helper function (SECURITY DEFINER)
+
+---
+
+## Real-Time Events
+
+All real-time updates use Supabase Realtime channels keyed by `board:{board_id}`.
+
+| Trigger | How it works |
+|---|---|
+| Card created | Postgres Changes INSERT on `cards` → fetch card → update Zustand store |
+| Card updated | Postgres Changes UPDATE on `cards` → fetch card → update Zustand store |
+| Card deleted | Postgres Changes DELETE on `cards` → remove from Zustand store |
+| Activity added | Postgres Changes INSERT on `activity_logs` → fetch entry → add to feed |
+| User joins board | Supabase Presence track → presence sync → update avatars |
+| User leaves board | Supabase Presence untrack → presence sync → remove avatar |
 
 ---
 
 ## Deployment
 
-### Backend → [Railway](https://railway.app) or [Render](https://render.com)
-
-1. Push the repository to GitHub
-2. Create a new web service pointing to the `backend/` directory
-3. Set start command:
-   ```
-   uvicorn app.main:app --host 0.0.0.0 --port $PORT
-   ```
-4. Add a PostgreSQL plugin and set `DATABASE_URL`
-5. Add all other environment variables from `.env.example`
-
 ### Frontend → [Vercel](https://vercel.com)
 
-1. Import the repository into Vercel
-2. Set root directory to `frontend/`
-3. Set environment variables:
-   - `VITE_API_URL` → your backend URL
-   - `VITE_SOCKET_URL` → same backend URL
+1. Push the repository to GitHub
+2. Import into Vercel, set **root directory** to `frontend/`
+3. Add environment variables:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
 4. Deploy — `vercel.json` handles SPA routing automatically
 
 ---
@@ -359,5 +256,5 @@ This project is licensed under the [MIT License](LICENSE).
 ---
 
 <div align="center">
-  Built with Vibe Coding💻 and Own Idea💡
+  Built with Vibe Coding 💻 and Own Idea 💡
 </div>
